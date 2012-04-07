@@ -287,7 +287,7 @@ class RollTestCase(TestCase):
         roll = Roll(3)
         roll.add(0)
 
-    @loaded_dice([1, 3, 5, 2, 4, 1])
+    @loaded_dice([1, 3, 5,  2, 4, 1,  5])
     def test_add_dice_updated(self):
         """
         Test that adding dice updates the dice list.
@@ -298,7 +298,7 @@ class RollTestCase(TestCase):
         roll.add(3)
         self.assertEquals(roll.dice, [1, 3, 5, 2, 4, 1])
 
-    @loaded_dice([1, 3, 5, 2, 5, 1])
+    @loaded_dice([1, 3, 5,  2, 5, 1,  2])
     def test_add_hits_increased(self):
         """
         Test that adding dice updates the number of hits.
@@ -309,7 +309,7 @@ class RollTestCase(TestCase):
         roll.add(3)
         self.assertEquals(roll.hits, 2)
 
-    @loaded_dice([1, 2, 3, 4, 5, 1, 2, 3])
+    @loaded_dice([1, 2, 3, 4,  5, 1, 2,  3])
     def test_add_dice_pool_increased(self):
         """
         Test that adding dice updates the number of dice.
@@ -320,7 +320,7 @@ class RollTestCase(TestCase):
         roll.add(3)
         self.assertEquals(roll.dice_pool, 7)
 
-    @loaded_dice([1, 2, 3, 4, 5, 1, 2, 3])
+    @loaded_dice([1, 2, 3, 4,  5, 1, 2,  3])
     def test_add_original_dice_pool_not_increased(self):
         """
         Test that adding dice does not affect the original number of dice.
@@ -331,7 +331,7 @@ class RollTestCase(TestCase):
         roll.add(3)
         self.assertEquals(roll.original_dice_pool, 4)
 
-    @loaded_dice([1, 3, 1, 2, 5, 1])
+    @loaded_dice([1, 3, 1,  2, 5, 1])
     def test_add_gliches_added(self):
         """
         Test that adding dice updates the number of glitches.
@@ -342,7 +342,7 @@ class RollTestCase(TestCase):
         roll.add(3)
         self.assertEquals(roll.glitches, 3)
 
-    @loaded_dice([1, 2, 5, 1, 1])
+    @loaded_dice([1, 2, 5,  1, 1])
     def test_add_becomes_glitch(self):
         """
         Test that adding dice with glitches causes the roll to become a glitch.
@@ -353,7 +353,7 @@ class RollTestCase(TestCase):
         roll.add(2)
         self.assertTrue(roll.glitch)
 
-    @loaded_dice([1, 2, 3, 1, 1])
+    @loaded_dice([1, 2, 3,  1, 1])
     def test_add_becomes_fumble(self):
         """
         Test that adding dice with glitches causes the roll to become a fumble.
@@ -364,7 +364,7 @@ class RollTestCase(TestCase):
         roll.add(2)
         self.assertTrue(roll.fumble)
 
-    @loaded_dice([6, 2, 3, 6, 1, 4, 1, 2])
+    @loaded_dice([6, 2, 3,  6, 1, 4, 1,  2])
     def test_add_edge_explodes(self):
         """
         Test that adding sixees explode, as they are added using Edge.
@@ -375,6 +375,91 @@ class RollTestCase(TestCase):
         roll.add(3)
         self.assertEquals(roll.dice_pool, 7)
         self.assertEquals(roll.dice, [6, 2, 3, 6, 1, 4, 1])
+
+    @loaded_dice([6, 5, 3, 2,  1, 2,  3])
+    def test_reroll_hits_unaffected(self):
+        """
+        Test that rerolling does not affect hits.
+        """
+
+        roll = Roll(4)
+        self.assertEquals(roll.dice, [6, 5, 3, 2])
+        roll.reroll()
+        self.assertEquals(roll.dice, [6, 5, 1, 2])
+
+    @loaded_dice([1, 5, 2, 6,  5, 5,  1])
+    def test_reroll_hits_updated(self):
+        """
+        Test that rerolling updates the number of hits.
+        """
+
+        roll = Roll(4)
+        self.assertEquals(roll.hits, 2)
+        roll.reroll()
+        self.assertEquals(roll.hits, 4)
+
+    @loaded_dice([1, 2, 1, 6,  1, 1, 1,  2])
+    def test_reroll_glitches_updated(self):
+        """
+        Test that rerolling updates the number of glitches.
+        """
+
+        roll = Roll(4)
+        self.assertEquals(roll.glitches, 2)
+        roll.reroll()
+        self.assertEquals(roll.glitches, 3)
+
+    @loaded_dice([3, 2, 1,  6, 1, 1,  1])
+    def test_reroll_causes_glitch(self):
+        """
+        Test that reloading resulting in glitches can cause a glitch.
+        """
+
+        roll = Roll(3)
+        self.assertFalse(roll.glitch)
+        roll.reroll()
+        self.assertTrue(roll.glitch)
+
+    @loaded_dice([3, 2, 1,  4, 1, 1,  1])
+    def test_reroll_causes_fumble(self):
+        """
+        Test that reloading resulting in glitches can cause a fumble.
+        """
+
+        roll = Roll(3)
+        self.assertFalse(roll.fumble)
+        roll.reroll()
+        self.assertTrue(roll.fumble)
+
+    @loaded_dice([1, 2, 6,  6, 5,  5])
+    def test_reroll_dont_explode(self):
+        """
+        Test that rerolled that are sixes dice do not explode.
+        """
+
+        roll = Roll(3)
+        self.assertEquals(roll.dice, [1, 2, 6])
+        self.assertEquals(roll.original_dice_pool, 3)
+        self.assertEquals(roll.dice_pool, 3)
+        roll.reroll()
+        self.assertEquals(roll.dice, [6, 6, 5])
+        self.assertEquals(roll.original_dice_pool, 3)
+        self.assertEquals(roll.dice_pool, 3)
+
+    @loaded_dice([1, 2, 6, 1, 3, 4, 5,  2])
+    def test_reroll_exploded_rerolled(self):
+        """
+        Test that exploded dice that are not hits are also rerolled.
+        """
+
+        roll = Roll(3, edge=True)
+        self.assertEquals(roll.dice, [1, 2, 6, 1])
+        self.assertEquals(roll.original_dice_pool, 3)
+        self.assertEquals(roll.dice_pool, 4)
+        roll.reroll()
+        self.assertEquals(roll.dice, [6, 3, 4, 5])
+        self.assertEquals(roll.original_dice_pool, 3)
+        self.assertEquals(roll.dice_pool, 4)
 
     @loaded_dice([1, 2, 5])
     def test_str_baseline(self):
