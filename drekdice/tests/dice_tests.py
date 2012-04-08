@@ -14,16 +14,8 @@ def loaded_dice(result):
     Patch random.randrange to provide an expected set of results.
     """
 
-    def loaded(f):
-
-        it = iter(result)
-        @patch.object(random, "randrange", lambda x,y: it.next())
-        @wraps(f)
-        def wrapped(*args, **kwargs):
-            f(*args, **kwargs)
-        return wrapped
-
-    return loaded
+    it = iter(result)
+    return patch.object(random, "randrange", lambda x,y: it.next())
 
 
 class RollTestCase(TestCase):
@@ -446,7 +438,7 @@ class RollTestCase(TestCase):
         self.assertEquals(roll.original_dice_pool, 3)
         self.assertEquals(roll.dice_pool, 3)
 
-    @loaded_dice([1, 2, 6, 1, 3, 4, 5,  2])
+    @loaded_dice([1, 2, 6, 1,  3, 4, 5,  2])
     def test_reroll_exploded_rerolled(self):
         """
         Test that exploded dice that are not hits are also rerolled.
