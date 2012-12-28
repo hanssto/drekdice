@@ -6,7 +6,7 @@ from unittest import TestCase
 from mock import Mock, patch
 from nose.tools import raises
 
-from drekdice.dice import Roll
+from drekdice.dice import Roll, SuccessTest
 
 
 def loaded_dice(result):
@@ -359,7 +359,7 @@ class RollTestCase(TestCase):
     @loaded_dice([6, 2, 3,  6, 1, 4, 1,  2])
     def test_add_edge_explodes(self):
         """
-        Test that adding sixees explode, as they are added using Edge.
+        Test that adding sixes explode, as they are added using Edge.
         """
 
         roll = Roll(3)
@@ -482,3 +482,80 @@ class RollTestCase(TestCase):
         roll = Roll(3)
         self.assertFalse("Glitch!" in str(roll))
         self.assertTrue("Critical glitch!" in str(roll))
+
+
+class SuccessTestTestCase(TestCase):
+
+    @loaded_dice([1, 3, 2, 5])
+    def test_success_under_threshold_false(self):
+
+        test = SuccessTest(dice_pool=4, threshold=3)
+        self.assertFalse(test.success)
+
+    @loaded_dice([5, 5, 2, 6])
+    def test_success_equal_threshold_true(self):
+
+        test = SuccessTest(dice_pool=4, threshold=3)
+        self.assertTrue(test.success)
+
+    @loaded_dice([6, 5, 5, 6])
+    def test_success_over_threshold_true(self):
+
+        test = SuccessTest(dice_pool=4, threshold=3)
+        self.assertTrue(test.success)
+
+    @loaded_dice([6, 5, 1, 2])
+    def test_net_hits_under_threshold_0(self):
+
+        test = SuccessTest(dice_pool=4, threshold=3)
+        self.assertEquals(test.net_hits, 0)
+
+    @loaded_dice([6, 1, 5, 6])
+    def test_net_hits_equal_threshold_0(self):
+
+        test = SuccessTest(dice_pool=4, threshold=3)
+        self.assertEquals(test.net_hits, 0)
+
+    @loaded_dice([6, 5, 5, 6])
+    def test_net_his_over_threshold_positive(self):
+
+        test = SuccessTest(dice_pool=4, threshold=2)
+        self.assertEquals(test.net_hits, 2)
+
+    @loaded_dice([1, 2, 3, 4])
+    def test_crit_no_success_false(self):
+
+        test = SuccessTest(dice_pool=4, threshold=2)
+        self.assertFalse(test.crit)
+
+    @loaded_dice([5, 6, 1, 1])
+    def test_crit_success_no_net_hits_false(self):
+
+        test = SuccessTest(dice_pool=4, threshold=2)
+        self.assertFalse(test.crit)
+
+    @loaded_dice([5, 6, 5, 1])
+    def test_crit_success_less_net_hits_false(self):
+
+        test = SuccessTest(dice_pool=4, threshold=2)
+        self.assertFalse(test.crit)
+
+    @loaded_dice([1, 5, 5, 6, 5, 5, 6])
+    def test_crit_success_enough_net_hits_true(self):
+
+        test = SuccessTest(dice_pool=7, threshold=2)
+        self.assertTrue(test.crit)
+
+    @loaded_dice([6, 5, 5, 6, 5, 5, 6])
+    def test_crit_success_more_net_hits_true(self):
+
+        test = SuccessTest(dice_pool=7, threshold=2)
+        self.assertTrue(test.crit)
+
+    @loaded_dice([6, 5, 5, 6, 5, 5, 6])
+    def test_crit_also_success(self):
+
+        test = SuccessTest(dice_pool=7, threshold=2)
+        self.assertTrue(test.crit)
+        self.assertTrue(test.success)
+
