@@ -190,7 +190,8 @@ class SuccessTest(object):
         """
 
         self._threshold = threshold
-        self._roll = Roll(dice_pool, edge=edge)
+        self.edge = edge
+        self._roll = Roll(dice_pool, edge=self.edge)
 
     @property
     def threshold(self):
